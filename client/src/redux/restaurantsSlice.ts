@@ -26,6 +26,7 @@ const initialState: RestaurantsState = {
 
 export const fetchRestaurants = createAsyncThunk(
   'restaurants/fetchRestaurants',
+  // "proxy": "http://localhost:3001", https://dinelocatorapi.onrender.com
   async (location: { lat: number; lng: number }) => {
     const response = await axios.get('/api/places', {
       params: {

@@ -48,7 +48,7 @@ app.get("/api/places", async (req, res) => {
           location: `${lat},${lng}`,
           radius: 1500,
           type: "restaurant",
-          key: "AIzaSyAp9SQVE7pFc57ZF79dy3_62YCJcqhuoHU",
+          key: process.env.REACT_APP_GOOGLE_PLACES_API_KEY,
         },
       }
     );
