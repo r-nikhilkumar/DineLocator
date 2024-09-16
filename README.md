@@ -59,8 +59,8 @@ server
 ├── .env
 ```
 
-![Default page Screenshot](screenshots/defaultpage.png)
-![Results page Screenshot](screenshots/resultsPage.png)
+![Default page Screenshot](screenshots/above.png)
+![Results page Screenshot](screenshots/below.png)
 
 ### Components and State Management
 
