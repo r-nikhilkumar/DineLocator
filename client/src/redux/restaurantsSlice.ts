@@ -1,6 +1,7 @@
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { server } from '../constants';
 
 interface Restaurant {
   name: string;
@@ -28,7 +29,7 @@ export const fetchRestaurants = createAsyncThunk(
   'restaurants/fetchRestaurants',
   // "proxy": "http://localhost:3001", https://dinelocatorapi.onrender.com
   async (location: { lat: number; lng: number }) => {
-    const response = await axios.get('/api/places', {
+    const response = await axios.get(`${server}/api/places`, {
       params: {
         lat: location.lat,
         lng: location.lng,
