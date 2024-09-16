@@ -52,7 +52,7 @@ app.get("/api/places", async (req, res) => {
         },
       }
     );
-    console.log(response);
+    // console.log(response);
 
     const restaurants = response.data.results.map((restaurant) => {
       const photoUrl = restaurant.photos
