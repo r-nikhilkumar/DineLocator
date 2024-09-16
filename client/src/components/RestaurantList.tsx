@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import { fetchRestaurants, resetRestaurants } from "../redux/restaurantsSlice";
 import RestaurantItem from "./RestaurantItem";
+import { useMap } from "@vis.gl/react-google-maps"; // Ensure this import is correct
+
 import {
   APIProvider,
   Map,
@@ -9,7 +11,6 @@ import {
   MapControl,
   AdvancedMarker,
   useAdvancedMarkerRef,
-  useMap,
 } from "@vis.gl/react-google-maps";
 import { FaSpinner } from "react-icons/fa6";
 import PlaceAutocomplete from "./PlaceAutocomplete";
@@ -20,7 +21,7 @@ const mapId = process.env.REACT_APP_MAP_ID || "";
 
 const RestaurantList: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { restaurants, status, error } = useAppSelector(
+  const { restaurants, status, error, totalResults } = useAppSelector(
     (state) => state.restaurants
   );
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(
@@ -30,32 +31,49 @@ const RestaurantList: React.FC = () => {
     useState<google.maps.places.PlaceResult | null>(null);
   const [markerRef, marker] = useAdvancedMarkerRef();
   const [showStaticImage, setShowStaticImage] = useState(true);
+  const [page, setPage] = useState(1);
+  const pageSize = 9;
 
+  // Fetch restaurants based on location and page number
   useEffect(() => {
     if (location) {
-      dispatch(fetchRestaurants(location));
+      dispatch(fetchRestaurants({ location, page, pageSize }));
     }
-  }, [dispatch, location]);
+  }, [dispatch, location, page]);
 
+  // When a place is selected from autocomplete, update location and reset search
   useEffect(() => {
     if (selectedPlace && selectedPlace.geometry?.location) {
-      setLocation({
+      const newLocation = {
         lat: selectedPlace.geometry.location.lat(),
         lng: selectedPlace.geometry.location.lng(),
-      });
+      };
+      setLocation(newLocation);
       setShowStaticImage(false);
-    }
-  }, [selectedPlace]);
 
+      // Reset the restaurant list and start from page 1
+      dispatch(resetRestaurants());
+      setPage(1);
+      dispatch(fetchRestaurants({ location: newLocation, page: 1, pageSize }));
+    }
+  }, [selectedPlace, dispatch]);
+
+  // Handle geolocation search
   const handleGetLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setLocation({
+          const newLocation = {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
-          });
+          };
+          setLocation(newLocation);
           setShowStaticImage(false);
+
+          // Reset state before fetching new results
+          dispatch(resetRestaurants());
+          setPage(1); // Reset page number when getting a new location
+          dispatch(fetchRestaurants({ location: newLocation, page: 1, pageSize }));
         },
         (error) => {
           console.error(error.message);
@@ -66,11 +84,20 @@ const RestaurantList: React.FC = () => {
     }
   };
 
+  // Reset the search and clear the results
   const handleReset = () => {
     setLocation(null);
     setSelectedPlace(null);
     setShowStaticImage(true);
+    setPage(1); // Reset the page when resetting the location
     dispatch(resetRestaurants());
+  };
+
+  // Load more results by incrementing the page
+  const handleLoadMore = () => {
+    if (restaurants.length < totalResults) {
+      setPage((prevPage) => prevPage + 1); // Increment page on Load More button click
+    }
   };
 
   return (
@@ -78,10 +105,11 @@ const RestaurantList: React.FC = () => {
       <div>
         <div className="relative">
           <div className="flex justify-center">
-          <div className="max-w-md">
+            <div className="max-w-md">
               <h1 className="mb-5 text-3xl font-bold">Find Nearby Restaurants</h1>
               <p className="mb-5">
-              “Find nearby restaurants, explore new dining options, check distances, ratings, and view them on Google Maps.”
+                “Find nearby restaurants, explore new dining options, check distances,
+                ratings, and view them on Google Maps.”
               </p>
             </div>
           </div>
@@ -115,7 +143,7 @@ const RestaurantList: React.FC = () => {
           <div className="hero-overlay bg-opacity-60"></div>
           <div className="hero-content flex flex-col items-center justify-start text-neutral-content h-full w-full">
             <div className="flex justify-center">
-            <button
+              <button
                 className="bg-neutral-700 text-white px-3 py-1 rounded-md hover:bg-neutral-900 mx-2"
                 onClick={handleGetLocation}
               >
@@ -166,6 +194,14 @@ const RestaurantList: React.FC = () => {
                   }}
                 />
               </div>
+            )}
+            {restaurants.length < totalResults && (
+              <button
+                onClick={handleLoadMore}
+                className="bg-blue-500 text-white px-4 py-2 mt-4 rounded-md hover:bg-blue-700"
+              >
+                Load More
+              </button>
             )}
           </div>
           <div className="bg-white w-full"></div>

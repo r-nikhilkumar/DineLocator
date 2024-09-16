@@ -40,7 +40,7 @@ const haversineDistance = (coords1, coords2) => {
 
 app.get("/api/places", async (req, res) => {
   try {
-    const { lat, lng } = req.query;
+    const { lat, lng, page = 1, pageSize = 10 } = req.query; // Get page and pageSize from query params
     const response = await axios.get(
       "https://maps.googleapis.com/maps/api/place/nearbysearch/json",
       {
@@ -52,7 +52,6 @@ app.get("/api/places", async (req, res) => {
         },
       }
     );
-    // console.log(response);
 
     const restaurants = response.data.results.map((restaurant) => {
       const photoUrl = restaurant.photos
@@ -63,6 +62,7 @@ app.get("/api/places", async (req, res) => {
         vicinity: restaurant.vicinity,
         rating: restaurant.rating,
         user_ratings_total: restaurant.user_ratings_total,
+        place_id: restaurant.place_id,
         distance: haversineDistance(
           { lat: parseFloat(lat), lng: parseFloat(lng) },
           {
@@ -74,16 +74,20 @@ app.get("/api/places", async (req, res) => {
       };
     });
 
-    // Sort restaurants by distance and return top 10
+    // Sort restaurants by distance and paginate results
     const sortedRestaurants = restaurants
       .sort((a, b) => a.distance - b.distance)
-      .slice(0, 10);
+      .slice((page - 1) * pageSize, page * pageSize); // Apply pagination logic
 
-    res.json(sortedRestaurants);
+    res.json({
+      restaurants: sortedRestaurants,
+      totalResults: restaurants.length, // Total number of restaurants found
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
+
 
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);

@@ -13,6 +13,34 @@ interface RestaurantItemProps {
   placeId: string;
 }
 
+const renderStars = (rating: number) => {
+  // Ensure the rating is a valid number between 0 and 5
+  const safeRating = Math.min(Math.max(rating, 0), 5) || 0;
+  const fullStars = Math.max(0, Math.floor(safeRating));
+  const halfStar = safeRating % 1 !== 0;
+  const emptyStars = Math.max(0, 5 - fullStars - (halfStar ? 1 : 0));
+
+  return (
+    <div className="flex text-yellow-400 text-lg">
+      {Array(fullStars)
+        .fill(0)
+        .map((_, idx) => (
+          <span key={`full-${idx}`}>&#9733;</span>
+        ))}
+      {halfStar && <span>&#9734;</span>}
+      {Array(emptyStars)
+        .fill(0)
+        .map((_, idx) => (
+          <span key={`empty-${idx}`} className="text-gray-400">
+            &#9734;
+          </span> // Empty star
+        ))}
+    </div>
+  );
+};
+
+
+
 // Component to display individual restaurant information
 const RestaurantItem: React.FC<RestaurantItemProps> = ({
   name,
@@ -43,10 +71,11 @@ const RestaurantItem: React.FC<RestaurantItemProps> = ({
           />
         )}
         <p className="text-gray-600 mt-1">{vicinity}</p>
-        <p className="text-gray-600">
-          Rating: {rating} ({userRatingsTotal} reviews)
-        </p>
-        <p className=" text-gray-900 font-semibold">
+        <div className="flex items-center mt-1">
+          {renderStars(rating)}
+          <span className="ml-2 text-gray-600">({userRatingsTotal??0} reviews)</span>
+        </div>
+        <p className="text-gray-900 font-semibold">
           Distance: {distance.toFixed(4)} km
         </p>
         <a
